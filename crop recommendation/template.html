@@ -1,0 +1,175 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crop Prediction System</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #80EF80;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #28a745;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    form input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #28a745;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    #prediction-result {
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 20px;
+      color: #333;
+    }
+    .chatbot {
+      margin-top: 50px;
+      border-top: 2px solid #e0e0e0;
+      padding-top: 20px;
+    }
+    .chat-box {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      height: 200px;
+      overflow-y: auto;
+      background-color: #fdfdfd;
+    }
+    .message {
+      margin: 5px 0;
+    }
+    .user { color: #007bff; }
+    .bot { color: #28a745; }
+    .chat-input {
+      display: flex;
+      margin-top: 10px;
+    }
+    .chat-input input {
+      flex: 5;
+      margin-right: 10px;
+    }
+    .chat-input button {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+<header>Crop Prediction System</header>
+
+<div class="container">
+  <form id="prediction-form">
+    <label for="N">Nitrogen</label>
+    <input type="number" name="N" placeholder="Nitrogen (N)" required />
+
+    <label for="P">Phosphorus</label>
+    <input type="number" name="P" placeholder="Phosphorus (P)" required />
+
+    <label for="K">Potassium</label>
+    <input type="number" name="K" placeholder="Potassium (K)" required />
+
+    <label for="temperature">Temperature</label>
+    <input type="number" step="0.01" name="temperature" placeholder="Temperature (°C)" required />
+
+    <label for="humidity">Humidity</label>
+    <input type="number" step="0.01" name="humidity" placeholder="Humidity (%)" required />
+
+    <label for="ph">Soil pH</label>
+    <input type="number" step="0.01" name="ph" placeholder="Soil pH" required />
+
+    <label for="rainfall">Rainfall</label>
+    <input type="number" step="0.01" name="rainfall" placeholder="Rainfall (mm)" required />
+
+    <button type="submit">Predict Crop</button>
+  </form>
+  <div id="prediction-result"></div>
+
+  <div class="chatbot">
+    <h3>Chat with AgriBot </h3>
+    <div class="chat-box" id="chat-box"></div>
+    <div class="chat-input">
+      <input type="text" id="chat-message" placeholder="Ask a question..." />
+      <button onclick="sendChat()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Handle prediction form
+  document.getElementById("prediction-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    const response = await fetch("/predict", {
+      method: "POST",
+      body: formData
+    });
+
+    const result = await response.json();
+    if (result.prediction) {
+      document.getElementById("prediction-result").innerText = "Recommended Crop: " + result.prediction.toUpperCase();
+    } else {
+      document.getElementById("prediction-result").innerText = "Error: " + result.error;
+    }
+  });
+
+  // Handle chatbot interaction
+  async function sendChat() {
+    const inputBox = document.getElementById("chat-message");
+    const message = inputBox.value;
+    if (!message) return;
+
+    appendMessage("You", message, "user");
+
+    const response = await fetch("/chat", {
+      method: "POST",
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: "message=" + encodeURIComponent(message)
+    });
+
+    const result = await response.json();
+    appendMessage("AgriBot", result.reply, "bot");
+
+    inputBox.value = "";
+  }
+
+  function appendMessage(sender, text, type) {
+    const chatBox = document.getElementById("chat-box");
+    const div = document.createElement("div");
+    div.className = "message " + type;
+    div.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+</script>
+
+</body>
+</html>
+
